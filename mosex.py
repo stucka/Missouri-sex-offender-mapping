@@ -80,18 +80,45 @@ perpdb.execute('''create index idindex on perp (ID)''')
 ####DO I WANT TO PICK UP THE NAMES HERE?
 
 
-localcsv = csv.reader(open(r'./sor.csv','r'))
-localcsv.next()                             #Skip header row
+localcsv = csv.reader(open(r'./moaddress.csv','r'))
+#localcsv.next()                             #Skip header row
 
 for line in localcsv:
+    line[9] = line[9].title().strip()
+## Is this in a place we actually care about?
+    if not (line[7] == 'MO' and line[9] in countiesicareabout):
+#        print "OK, I'm ignoring ", line[0], ": at",fulladdy
+#        print ".",
+        pass
+    else:
+        print "Got one!"
+        for idx, val in enumerate(line):
+            line[idx] = val.title().strip();
+        line[7] = line[7].upper()
 
-    for idx, val in enumerate(line):
-        line[idx] = val.title().strip();
-
-    line[12] = line[12].upper()         #Fix one state    
 
 
 
+
+"""
+monames file layout (educated guesses, unconfirmed)
+0 - ID
+1 - ?
+2 - H/W/N (home or work or something)
+3 - Workplace name
+4 - StreetNo
+5 - StreetName
+6 - CityName
+7 - StateName
+8 - ZIP
+9 - County
+10 - Last Name?
+11 - First Name?
+12 - Middle Name?
+13 - Jr. Sr maybe?
+14 - ?
+15 - ?
+"""
 
 
 
