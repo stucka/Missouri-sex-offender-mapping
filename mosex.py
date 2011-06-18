@@ -91,7 +91,7 @@ for line in localcsv:
 #        print ".",
         pass
     else:
-        print "Got one!"
+#        print "Got one!"
         for idx, val in enumerate(line):
             line[idx] = val.title().strip();
         line[7] = line[7].upper()
@@ -163,7 +163,7 @@ for line in localcsv:
             glat = str(sqlreturn[1])
             glong = str(sqlreturn[2])
 #            print line[0], ": at",fulladdy, " already in database at ", glat, "and", glong
-            print line[0], " already in database"
+            print line[0], ": ", shortaddy, " already in database"
         else:
             print "Multiple rows for same ", fulladdy, ", What the hell did you do?"
 
