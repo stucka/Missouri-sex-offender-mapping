@@ -72,9 +72,9 @@ if os.path.exists('./perpdb.sqlite'):
 
 perpdbconn = sqlite3.connect('./perpdb.sqlite')
 perpdb = perpdbconn.cursor()
-perpdb.execute('''create table perp (ID text, addytype text, addyname text,
+perpdb.execute('''create table perp (ID integer, addytype text, addyname text,
 streetno text, streetname text, city text, state text, zipcode text,
-county text)''')
+county text, shortaddy text, fulladdy text, glat text, glong text)''')
 perpdb.execute('''create index idindex on perp (ID)''')
 
 ####DO I WANT TO PICK UP THE NAMES HERE?
@@ -95,8 +95,77 @@ for line in localcsv:
         for idx, val in enumerate(line):
             line[idx] = val.title().strip();
         line[7] = line[7].upper()
+#perpdb.execute('''create table perp (ID integer, addytype text, addyname text,
+#streetno text, streetname text, city text, state text, zipcode text,
+#county text, shortaddy text, fulladdy text, glat text, glong text)''')
+#So insert's going to look like line0, line2, line 3, line4,
+#line5, line 6, line7, line8, line9, shortaddy, fulladdy, glat, glong
+#So let's start getting those values
+#Do we take names from here or the name table?
 
 
+
+        if len(line[9]) > 2:
+            CountyTextFix = line[9] + " County, "
+            CountyNameFix = line[9] + " County"
+        else:
+            CountyTextFix = ''
+            CountyNameFix = ''
+
+        if len(line[3]) > 2:
+            PlaceNameFix = line[3] + ", "
+        else:
+            PlaceNameFix = ""
+            
+        shortaddy = PlaceNameFix + line[4] + " " + line[5] + ", " + line[6]
+        fulladdy = shortaddy + ", " + CountyTextFix + line[7] + " " + line[8]
+        
+
+##
+## OK, so let's see if we already know where this address is. We can
+## check to see how many times the row shows up; if the row doesn't exist in
+## the database, we'll need to try geocoding it through Google, and if that
+## doesn't work we'll go through Geocoder.US, and if that doesn't work
+## we'll give it the site of the 1903 RMS Republic wreck for no reason
+## whatsoever.
+## If we do have a single listing, let's grab the lat and long.
+## If we have multiple listings for the same address, we probably have
+## database corruption.
+
+        geodb.execute('select count(*), glat, glong from sexgeo where fulladdy = ?', [fulladdy])
+        sqlreturn = geodb.fetchone()
+    #    print sqlreturn
+        if sqlreturn[0] == 0:
+            try:
+                googlegeo = geocoders.Google()
+                for tempplace, (templat, templong) in googlegeo.geocode(fulladdy, exactly_one=False):
+                    gplace=str(tempplace)
+                    glat=str(templat)
+                    glong=str(templong)
+            except (ValueError, GQueryError):
+                try:
+                    usgeo = geocoders.GeocoderDotUS()
+                    for tempplace, (templat, templong) in usgeo.geocode(fulladdy, exactly_one=False):
+                        gplace=str(tempplace)
+                        glat=str(templat)
+                        glong=str(templong)
+                except (ValueError, GQueryError, TypeError):
+                    print "Location '", fulladdy, "not found. Setting lat-long to 42.02,-42.02, in honor of OCGA 42 1 12"
+                    glat = "42.02"
+                    glong = "-42.02"
+                    gplace = "OCGA 42-1-12 calls for registry, but we can't find this person."
+    ## So if things went right, we now have a geocoded address.
+    ## Let's put that in the database.                
+            geodb.execute('insert into sexgeo values (?,?,?)', [fulladdy, glat, glong])
+            geodbconn.commit()
+            print line[0], ": geocoded and recorded ", fulladdy, "at ", glat, ", ", glong
+        elif sqlreturn[0] == 1:
+            glat = str(sqlreturn[1])
+            glong = str(sqlreturn[2])
+#            print line[0], ": at",fulladdy, " already in database at ", glat, "and", glong
+            print line[0], " already in database"
+        else:
+            print "Multiple rows for same ", fulladdy, ", What the hell did you do?"
 
 
 
@@ -105,7 +174,7 @@ monames file layout (educated guesses, unconfirmed)
 0 - ID
 1 - ?
 2 - H/W/N (home or work or something)
-3 - Workplace name
+3 - Placename name
 4 - StreetNo
 5 - StreetName
 6 - CityName
