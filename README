@@ -6,6 +6,10 @@ effort using Georgia data.
 Use easy_install to fetch geopy. Everything else should come stock with
 Python 2.7.
 
+This was derived from a Georgia project. The natural name, Missouri Sex,
+gave a filename of mosex.py. This has been updated to missou,
+short for Missouri Sex Offender Utility. Better names are invited.
+
 Scream if you need me. Collaborators welcome, though I have no earthly
 idea who else would have an interest in this.	
 
